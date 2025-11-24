@@ -12,6 +12,7 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -23,7 +24,10 @@ import { GetUser } from '../../common/decorators/get-user.decorator';
 
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -58,7 +62,8 @@ export class PostsController {
     @GetUser('sub') usuarioId: string,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    const urlImagen = file ? `http://localhost:3001/uploads/publicaciones/${file.filename}` : undefined;
+    const appUrl = this.configService.get<string>('app.url');
+    const urlImagen = file ? `${appUrl}/uploads/publicaciones/${file.filename}` : undefined;
     return this.postsService.create(createPostDto, usuarioId, urlImagen);
   }
 

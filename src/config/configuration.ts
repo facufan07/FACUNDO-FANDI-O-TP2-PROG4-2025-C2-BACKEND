@@ -10,4 +10,7 @@ export default () => ({
   upload: {
     path: process.env.UPLOAD_PATH || './uploads',
   },
+  app: {
+    url: process.env.APP_URL || 'http://localhost:3001',
+  },
 });

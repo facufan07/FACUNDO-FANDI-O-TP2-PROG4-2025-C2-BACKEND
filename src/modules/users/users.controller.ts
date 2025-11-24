@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -28,6 +29,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly postsService: PostsService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Get(':id/perfil')
@@ -98,7 +100,8 @@ export class UsersController {
     @Body() createAdminUserDto: CreateAdminUserDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    const imagenPerfil = file ? `http://localhost:3001/uploads/perfiles/${file.filename}` : undefined;
+    const appUrl = this.configService.get<string>('app.url');
+    const imagenPerfil = file ? `${appUrl}/uploads/perfiles/${file.filename}` : undefined;
     const user = await this.usersService.createByAdmin(
       createAdminUserDto,
       imagenPerfil,
@@ -163,7 +166,8 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    const imagenPerfil = file ? `http://localhost:3001/uploads/perfiles/${file.filename}` : undefined;
+    const appUrl = this.configService.get<string>('app.url');
+    const imagenPerfil = file ? `${appUrl}/uploads/perfiles/${file.filename}` : undefined;
     const user = await this.usersService.updateProfile(id, updateUserDto, imagenPerfil);
 
     // Retornar usuario sin contraseña

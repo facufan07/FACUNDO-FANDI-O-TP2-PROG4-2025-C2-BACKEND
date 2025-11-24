@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -16,7 +17,10 @@ import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('registro')
   @HttpCode(HttpStatus.CREATED)
@@ -49,7 +53,8 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    const imagenPerfil = file ? `http://localhost:3001/uploads/perfiles/${file.filename}` : null;
+    const appUrl = this.configService.get<string>('app.url');
+    const imagenPerfil = file ? `${appUrl}/uploads/perfiles/${file.filename}` : null;
     return this.authService.register(createUserDto, imagenPerfil);
   }
 
