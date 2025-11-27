@@ -67,6 +67,37 @@ export class UsersService {
     return this.userModel.find().exec();
   }
 
+  async findAllPaginated(
+    offset: number = 0,
+    limit: number = 10,
+    busqueda?: string,
+    rol?: 'usuario' | 'administrador',
+  ): Promise<{ usuarios: User[]; total: number }> {
+    const query: any = {};
+
+    // Filtro por rol si se proporciona
+    if (rol) {
+      query.perfil = rol;
+    }
+
+    // Filtro de búsqueda por nombre, apellido, correo o nombreUsuario
+    if (busqueda) {
+      query.$or = [
+        { nombre: { $regex: busqueda, $options: 'i' } },
+        { apellido: { $regex: busqueda, $options: 'i' } },
+        { correo: { $regex: busqueda, $options: 'i' } },
+        { nombreUsuario: { $regex: busqueda, $options: 'i' } },
+      ];
+    }
+
+    const [usuarios, total] = await Promise.all([
+      this.userModel.find(query).skip(offset).limit(limit).exec(),
+      this.userModel.countDocuments(query).exec(),
+    ]);
+
+    return { usuarios, total };
+  }
+
   async validatePassword(
     plainPassword: string,
     hashedPassword: string,

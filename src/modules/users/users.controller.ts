@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -58,14 +59,40 @@ export class UsersController {
   @Get()
   @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
-  async findAll() {
-    const users = await this.usersService.findAll();
+  async findAll(
+    @Query('offset') offset?: string,
+    @Query('limit') limit?: string,
+    @Query('busqueda') busqueda?: string,
+    @Query('rol') rol?: 'usuario' | 'administrador',
+  ) {
+    const offsetNum = offset ? parseInt(offset, 10) : 0;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+
+    const { usuarios, total } = await this.usersService.findAllPaginated(
+      offsetNum,
+      limitNum,
+      busqueda,
+      rol,
+    );
+
     // Retornar usuarios sin contraseñas
-    return users.map((user: any) => {
+    const usuariosSinPassword = usuarios.map((user: any) => {
       const userObject = user.toJSON ? user.toJSON() : user;
       const { contrasena, ...result } = userObject;
-      return result;
+      // Asegurarse de que el campo se llame 'habilitado' en lugar de 'activo'
+      return { ...result, habilitado: result.activo };
     });
+
+    const page = Math.floor(offsetNum / limitNum) + 1;
+    const hasMore = offsetNum + limitNum < total;
+
+    return {
+      usuarios: usuariosSinPassword,
+      total,
+      page,
+      limit: limitNum,
+      hasMore,
+    };
   }
 
   @Post()

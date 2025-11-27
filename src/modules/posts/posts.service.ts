@@ -37,23 +37,46 @@ export class PostsService {
       filter.usuario = usuario;
     }
 
-    // Construir el ordenamiento
-    let sort: any = {};
+    let posts;
+
+    // Si ordenamos por popularidad, usamos aggregation pipeline
     if (ordenamiento === 'meGusta') {
-      // Ordenar por cantidad de me gusta (descendente)
-      sort = { 'meGusta.length': -1, createdAt: -1 };
+      posts = await this.postModel.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            meGustaCount: { $size: '$meGusta' },
+          },
+        },
+        { $sort: { meGustaCount: -1, createdAt: -1 } },
+        { $skip: offset },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'usuario',
+            foreignField: '_id',
+            as: 'usuario',
+          },
+        },
+        { $unwind: '$usuario' },
+        {
+          $project: {
+            'usuario.contrasena': 0,
+            meGustaCount: 0,
+          },
+        },
+      ]);
     } else {
       // Ordenar por fecha (más reciente primero)
-      sort = { createdAt: -1 };
+      posts = await this.postModel
+        .find(filter)
+        .populate('usuario', 'nombre apellido nombreUsuario urlImagenPerfil')
+        .sort({ createdAt: -1 })
+        .skip(offset)
+        .limit(limit)
+        .exec();
     }
-
-    const posts = await this.postModel
-      .find(filter)
-      .populate('usuario', 'nombre apellido nombreUsuario urlImagenPerfil')
-      .sort(sort)
-      .skip(offset)
-      .limit(limit)
-      .exec();
 
     const total = await this.postModel.countDocuments(filter);
 

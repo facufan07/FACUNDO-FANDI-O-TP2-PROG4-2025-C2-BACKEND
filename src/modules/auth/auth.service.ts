@@ -19,10 +19,10 @@ export class AuthService {
       imagenPerfil || undefined,
     );
 
-    // Generar token JWT
+    
     const token = this.generateToken(user._id.toString(), user.perfil);
 
-    // Retornar el usuario sin la contraseña + token
+    
     const userObject = user.toJSON();
     const { contrasena, ...result } = userObject;
     return {
@@ -40,14 +40,14 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Verificar si el usuario está activo
+    
     if (!user.activo) {
       throw new UnauthorizedException(
         'Su cuenta ha sido deshabilitada. Contacte al administrador.',
       );
     }
 
-    // Validar la contraseña
+    
     const isPasswordValid = await this.usersService.validatePassword(
       loginDto.contrasena,
       user.contrasena,
@@ -57,10 +57,10 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Generar token JWT
+    
     const token = this.generateToken(user._id.toString(), user.perfil);
 
-    // Retornar el usuario sin la contraseña + token
+    
     const userObject = user.toJSON();
     const { contrasena, ...result } = userObject;
     return {
